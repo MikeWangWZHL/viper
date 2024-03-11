@@ -1,0 +1,33 @@
+# For example:
+multiprocessing: False
+path_pretrained_models: '/shared/nas2/wangz3/ecole-gvs-method/third_party/viper/pretrained_models'
+dataset:
+    data_path: 'data'
+blip_v2_model_type: blip2-flan-t5-xxl  # Change to blip2-flan-t5-xl for smaller GPUs
+blip_half_precision: True
+# Add more changes here, following the same format as base_config.yaml
+gpt3:                                               # GPT-3 configuration
+    qa_prompt: /shared/nas2/wangz3/ecole-gvs-method/third_party/viper/prompts/gpt3/gpt3_qa.txt
+    guess_prompt: /shared/nas2/wangz3/ecole-gvs-method/third_party/viper/prompts/gpt3/gpt3_process_guess.txt
+codex:
+    model: gpt-4-turbo-preview
+    max_tokens: 2048
+    prompt: /shared/nas2/wangz3/ecole-gvs-method/third_party/viper/prompts/chatapi.prompt 
+
+results_dir: ./vipergpt_results
+fixed_code_file: /shared/nas2/wangz3/ecole-gvs-method/third_party/viper/prompts/fixed_code/blip2.prompt  # Path to the fixed code file
+
+load_models:                                        # Which pretrained models to load
+    maskrcnn: False
+    clip: False
+    glip: True
+    owlvit: False
+    tcl: False
+    gpt3_qa: False
+    gpt3_general: False
+    depth: True
+    blip: True
+    saliency: False
+    xvlm: True
+    codex: True
+    codellama: False

@@ -32,7 +32,7 @@ mp.set_start_method('spawn', force=True)
 from vision_processes import forward, finish_all_consumers  # This import loads all the models. May take a while
 from image_patch import *
 from video_segment import *
-from datasets.dataset import MyDataset
+# from datasets.dataset import MyDataset
 
 console = Console(highlight=False, force_terminal=False)
 
@@ -247,30 +247,43 @@ def load_image(path):
         image = Image.open(requests.get(path, stream=True).raw).convert('RGB')
         image = transforms.ToTensor()(image)
     else:
-        image = Image.open(path)
+        image = Image.open(path).convert('RGB')
         image = transforms.ToTensor()(image)
     return image
 
+def parse_python_code(code):
+    pattern = re.compile(r'```python(.*?)```', re.DOTALL)
+    matches = pattern.findall(code)
+    if len(matches) > 0:
+        return matches[0].strip()
+    else:
+        return code
 
 def get_code(query):
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
-    code = forward(model_name_codex, prompt=query, input_type="image")
-    if config.codex.model not in ('gpt-3.5-turbo', 'gpt-4'):
-        code = f'def execute_command(image, my_fig, time_wait_between_lines, syntax):' + code # chat models give execute_command due to system behaviour
-    code_for_syntax = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
-    syntax_1 = Syntax(code_for_syntax, "python", theme="monokai", line_numbers=True, start_line=0)
-    console.print(syntax_1)
-    code = ast.unparse(ast.parse(code))
-    code_for_syntax_2 = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
-    syntax_2 = Syntax(code_for_syntax_2, "python", theme="monokai", line_numbers=True, start_line=0)
-    return code, syntax_2
+    code = forward(model_name_codex, prompt=query, input_type="image", extra_context="")
+    try:
+        code = parse_python_code(code)
+        print("parsed code:", code)
+        if "gpt" not in config.codex.model:
+            code = f'def execute_command(image, my_fig, time_wait_between_lines, syntax):' + code # chat models give execute_command due to system behaviour
+        code_for_syntax = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
+        syntax_1 = Syntax(code_for_syntax, "python", theme="monokai", line_numbers=True, start_line=0)
+        console.print(syntax_1)
+        code = ast.unparse(ast.parse(code))
+        code_for_syntax_2 = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
+        syntax_2 = Syntax(code_for_syntax_2, "python", theme="monokai", line_numbers=True, start_line=0)
+        return code, syntax_2
+    except Exception as e:
+        print("cannot parse code:", code)
+        return None
 
 
 def execute_code(code, im, show_intermediate_steps=True):
     code, syntax = code
     code_line = inject_saver(code, show_intermediate_steps, syntax, time_wait_between_lines, console)
 
-    display(HTML("<style>.output_wrapper, .output {height:auto !important; max-height:1000000px;}</style>"))
+    # display(HTML("<style>.output_wrapper, .output {height:auto !important; max-height:1000000px;}</style>"))
 
     with Live(Padding(syntax, 1), refresh_per_second=10, console=console, auto_refresh=True) as live:
         my_fig = plt.figure(figsize=(4, 4))
@@ -284,29 +297,30 @@ def execute_code(code, im, show_intermediate_steps=True):
 
         plt.close(my_fig)
 
-    def is_not_fig(x):
-        if x is None:
-            return True
-        elif isinstance(x, str):
-            return True
-        elif isinstance(x, float):
-            return True
-        elif isinstance(x, int):
-            return True
-        elif isinstance(x, list) or isinstance(x, tuple):
-            return all([is_not_fig(xx) for xx in x])
-        elif isinstance(x, dict):
-            return all([is_not_fig(xx) for xx in x.values()])
-        return False
+    return result
+    # def is_not_fig(x):
+    #     if x is None:
+    #         return True
+    #     elif isinstance(x, str):
+    #         return True
+    #     elif isinstance(x, float):
+    #         return True
+    #     elif isinstance(x, int):
+    #         return True
+    #     elif isinstance(x, list) or isinstance(x, tuple):
+    #         return all([is_not_fig(xx) for xx in x])
+    #     elif isinstance(x, dict):
+    #         return all([is_not_fig(xx) for xx in x.values()])
+    #     return False
 
-    f = None
-    usefig = False
-    if not is_not_fig(result):
-        f = plt.figure(figsize=(4, 4))
-        usefig = True
+    # f = None
+    # usefig = False
+    # if not is_not_fig(result):
+    #     f = plt.figure(figsize=(4, 4))
+    #     usefig = True
 
-    console.rule(f"[bold]Final Result[/bold]", style="chartreuse2")
-    show_all(None, result, 'Result', fig=f, usefig=usefig, disp=False, console_in=console, time_wait_between_lines=0)
+    # console.rule(f"[bold]Final Result[/bold]", style="chartreuse2")
+    # show_all(None, result, 'Result', fig=f, usefig=usefig, disp=False, console_in=console, time_wait_between_lines=0)
 
 
 def show_single_image(im):
