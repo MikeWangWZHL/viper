@@ -7,7 +7,9 @@ export OPENAI_API_KEY=$(cat /shared/nas2/wangz3/openai_school_account_api_key)
 echo "API key: $OPENAI_API_KEY"
 export CUDA_VISIBLE_DEVICES=7
 
-TASKS="svg_probing_lines svg_probing_angles shapeworld_relational-spatial_twoshapes nlvr maze_g2 maze_g3 geoclidean_2-shot_elements shapeworld_selection-superlative shapeworld_relational-spatial"
+# TASKS="svg_probing_lines svg_probing_angles shapeworld_relational-spatial_twoshapes nlvr maze_g2 maze_g3 geoclidean_2-shot_elements shapeworld_selection-superlative shapeworld_relational-spatial"
+# TASKS="svg_probing_lines svg_probing_angles shapeworld_relational-spatial_twoshapes nlvr maze_g2 maze_g3 geoclidean_2-shot_elements shapeworld_selection-superlative shapeworld_relational-spatial"
+TASKS="maze_g2 maze_g3 geoclidean_2-shot_elements shapeworld_selection-superlative shapeworld_relational-spatial"
 
 # TASKS="shapeworld_relational-spatial_twoshapes maze_g3 geoclidean_2-shot_elements"
 # TASKS="geoclidean_2-shot_elements"

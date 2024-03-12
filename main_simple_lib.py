@@ -278,6 +278,26 @@ def get_code(query):
         print("cannot parse code:", code)
         return None
 
+import signal
+from contextlib import contextmanager
+
+@contextmanager
+def timeout(time):
+    # Register a function to raise a TimeoutError on the signal.
+    signal.signal(signal.SIGALRM, raise_timeout)
+    # Schedule the signal to be sent after ``time``.
+    signal.alarm(time)
+    try:
+        yield
+    except TimeoutError:
+        pass
+    finally:
+        # Unregister the signal so it won't be triggered
+        # if the timeout is not reached.
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+def raise_timeout(signum, frame):
+    raise TimeoutError
 
 def execute_code(code, im, show_intermediate_steps=True):
     code, syntax = code
@@ -289,14 +309,18 @@ def execute_code(code, im, show_intermediate_steps=True):
         my_fig = plt.figure(figsize=(4, 4))
         try:
             exec(compile(code_line, 'Codex', 'exec'), globals())
-            result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+            with timeout(200):
+                result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
         except Exception as e:
             print(f"Encountered error {e} when trying to run with visualizations. Trying from scratch.")
             exec(compile(code, 'Codex', 'exec'), globals())
-            result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
-
+            try:
+                with timeout(200):
+                    result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+            except Exception as e:
+                print("Time out error!")
+                result = None
         plt.close(my_fig)
-
     return result
     # def is_not_fig(x):
     #     if x is None:
@@ -321,6 +345,54 @@ def execute_code(code, im, show_intermediate_steps=True):
 
     # console.rule(f"[bold]Final Result[/bold]", style="chartreuse2")
     # show_all(None, result, 'Result', fig=f, usefig=usefig, disp=False, console_in=console, time_wait_between_lines=0)
+
+
+# def execute_code(code, im, show_intermediate_steps=True):
+#     code, syntax = code
+#     code_line = inject_saver(code, show_intermediate_steps, syntax, time_wait_between_lines, console)
+
+#     # display(HTML("<style>.output_wrapper, .output {height:auto !important; max-height:1000000px;}</style>"))
+
+#     with Live(Padding(syntax, 1), refresh_per_second=10, console=console, auto_refresh=True) as live:
+#         my_fig = plt.figure(figsize=(4, 4))
+#         try:
+#             exec(compile(code_line, 'Codex', 'exec'), globals())
+#             result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+#         except Exception as e:
+#             print(f"Encountered error {e} when trying to run with visualizations. Trying from scratch.")
+#             exec(compile(code, 'Codex', 'exec'), globals())
+#             result = execute_command(im, my_fig, time_wait_between_lines, syntax)  # The code is created in the exec()
+
+#         plt.close(my_fig)
+
+#     return result
+#     # def is_not_fig(x):
+#     #     if x is None:
+#     #         return True
+#     #     elif isinstance(x, str):
+#     #         return True
+#     #     elif isinstance(x, float):
+#     #         return True
+#     #     elif isinstance(x, int):
+#     #         return True
+#     #     elif isinstance(x, list) or isinstance(x, tuple):
+#     #         return all([is_not_fig(xx) for xx in x])
+#     #     elif isinstance(x, dict):
+#     #         return all([is_not_fig(xx) for xx in x.values()])
+#     #     return False
+
+#     # f = None
+#     # usefig = False
+#     # if not is_not_fig(result):
+#     #     f = plt.figure(figsize=(4, 4))
+#     #     usefig = True
+
+#     # console.rule(f"[bold]Final Result[/bold]", style="chartreuse2")
+#     # show_all(None, result, 'Result', fig=f, usefig=usefig, disp=False, console_in=console, time_wait_between_lines=0)
+
+
+
+
 
 
 def show_single_image(im):

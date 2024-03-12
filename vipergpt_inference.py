@@ -135,7 +135,6 @@ def main(args):
                     json_str = json.dumps(output)
                     file.write(json_str + '\n')
             # import pdb; pdb.set_trace()
-            break
             time.sleep(SLEEP_RATE)
     else:        
         # run single inference
