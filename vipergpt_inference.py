@@ -3,13 +3,12 @@ import json
 import sys
 sys.path.append("../../")
 
-
 from tasks import get_task_data
 import time
 from PIL import Image
 
-os.environ["CONFIG_DIR"] = "/shared/nas2/wangz3/ecole-gvs-method/third_party/viper/configs"
-os.environ["CONFIG_NAMES"] = "gpt4" # config file under: third_party/viper/configs
+os.environ["CONFIG_DIR"] = "./configs"
+os.environ["CONFIG_NAMES"] = "gpt4" # config file under: configs
 # for name, value in os.environ.items():
 #     print("{0}: {1}".format(name, value))
 # current_file_directory = os.path.dirname(__file__)
